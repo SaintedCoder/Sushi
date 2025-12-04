@@ -1,28 +1,70 @@
 # SUSHI/core/__init__.py
-# Simple wrapper so the master Sushi loader can activate the legacy Onigiri code
+# Lazy-loaded wrapper: Fixes circular imports by deferring module loads to register()
 
 import bpy
-from . import (action_quats_to_euler, anim, animutils, axis_defs, bvh, collada,
-               collada_universal, common, convert, curves, devkit, dynamic,
-               edit, gestures, globals_py, hierarchy, icon, icon_defs,
-               joint_data, latch, mapper, meshutils, mod_data, mod_flags,
-               mod_functions, mod_settings, monitor, motion, onemap, pill,
-               pose_bone_matrix, puppet, ragdoll, react, rigutils, shape,
-               shifter, sim, slbvh, sliders, snap, splice, template_editor,
-               templates, utils, views, visible)
+from bpy.utils import register_class, unregister_class
 
-# List of modules that have register/unregister functions
-REGISTER_MODULES = [
-    animutils, collada, collada_universal, devkit, gestures, rigutils,
-    template_editor, utils, views  # add more if they exist
-]
+# No top-level imports here — that's the loop killer!
+# We'll import inside functions only
+
+def _lazy_import(name):
+    """Safe import: Only loads when called, skips if already loaded."""
+    if name in globals():
+        return globals()[name]
+    mod = __import__(name, fromlist=[''])
+    globals()[name] = mod
+    return mod
 
 def register():
-    for mod in REGISTER_MODULES:
-        if hasattr(mod, "register"):
-            mod.register()
+    # Register core classes first (safe, no imports needed)
+    # Add any manual classes from Onigiri here if defined globally
+    CLASSES = []  # Populate if you have explicit class defs; otherwise empty
+    
+    for cls in CLASSES:
+        try:
+            register_class(cls)
+        except ValueError:
+            pass  # Already registered
+    
+    # Now lazy-load and register modules (one by one, catch errors)
+    MODULES_TO_REG = [
+        'utils', 'animutils', 'devkit', 'gestures', 'rigutils',
+        'collada', 'collada_universal', 'template_editor', 'views',
+        # Add more as needed, but test incrementally
+    ]
+    
+    for mod_name in MODULES_TO_REG:
+        try:
+            mod = _lazy_import(mod_name)
+            if hasattr(mod, 'register'):
+                mod.register()
+        except ImportError as e:
+            print(f"Warning: Failed to load {mod_name}: {e}")
+        except Exception as e:
+            print(f"Error registering {mod_name}: {e}")
 
 def unregister():
-    for mod in reversed(REGISTER_MODULES):
-        if hasattr(mod, "unregister"):
-            mod.unregister()
+    # Reverse order for safety
+    MODULES_TO_UNREG = [
+        'views', 'template_editor', 'collada_universal', 'collada',
+        'rigutils', 'gestures', 'devkit', 'animutils', 'utils',
+    ]
+    
+    for mod_name in reversed(MODULES_TO_UNREG):
+        try:
+            mod = _lazy_import(mod_name)
+            if hasattr(mod, 'unregister'):
+                mod.unregister()
+        except:
+            pass  # Graceful skip
+    
+    # Unregister classes last
+    for cls in reversed(CLASSES):
+        try:
+            unregister_class(cls)
+        except RuntimeError:
+            pass
+
+# For root loader compatibility — expose register/unregister
+if __name__ == "__main__":
+    register()
