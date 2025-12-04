@@ -1,30 +1,36 @@
-# Sushi – Emerald Works 2026
+# SUSHI/__init__.py
+import os
+import importlib
+import bpy
+
 bl_info = {
     "name": "Sushi",
-    "author": "Emerald Works",
-    "version": (0, 9, 0),
-    "blender": (3, 0, 0),
+    "author": "The Sushi Team",
+    "version": (0, 1, 0),
+    "blender": (5, 0, 0),
     "location": "View3D > Sidebar > Sushi",
-    "description": "The free forever Bento replacement",
+    "description": "Free, open-source bento rigging and animation tools for Second Life / OpenSim",
     "category": "Rigging",
 }
 
-import bpy
-from .core import register as register_core, unregister as unregister_core
-from .plugins.CaliforniaRoll import register as register_california, unregister as unregister_california
+modules = ["core"]
 
-modules = (
-    register_core,
-    register_california,
-)
+# Auto-discover plugin folders
+plugin_path = os.path.join(os.path.dirname(__file__), "plugins")
+if os.path.exists(plugin_path):
+    for name in sorted(os.listdir(plugin_path)):
+        full = os.path.join(plugin_path, name)
+        if os.path.isdir(full) and not name.startswith("_"):
+            modules.append(f"plugins.{name}")
 
 def register():
     for m in modules:
-        m()
+        mod = importlib.import_module(f".{m}", package=__package__)
+        if hasattr(mod, "register"):
+            mod.register()
 
 def unregister():
     for m in reversed(modules):
-        m()
-
-if __name__ == "__main__":
-    register()
+        mod = importlib.import_module(f".{m}", package=__package__)
+        if hasattr(mod, "unregister"):
+            mod.unregister()
