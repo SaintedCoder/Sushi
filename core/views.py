@@ -434,7 +434,7 @@ def restore_state():
     return True
 
 
-class SushiViewProperties(bpy.types.PropertyGroup):
+class OnigiriViewProperties(bpy.types.PropertyGroup):
 
     def update_viewable_layers(self, context):
         if oni_settings["terminate"]:
@@ -470,12 +470,12 @@ class SushiViewProperties(bpy.types.PropertyGroup):
 """
 
 
-class SushiViewOperator(bpy.types.Operator):
+class OnigiriViewOperator(bpy.types.Operator):
     """This may unhide everything and make it all selectable.  The toggle can be used to
     reverse the process.  It's buggy.  Use it only as a brute force way to examine items but make
     sure that you DON'T save your file after.  Save BEFORE using"""
 
-    bl_idname = "Sushi.access_everything"
+    bl_idname = "onigiri.access_everything"
     bl_label = "See All"
 
     state: bpy.props.StringProperty(default="")
@@ -489,13 +489,13 @@ class SushiViewOperator(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class SushiPanelView(bpy.types.Panel):
+class OnigiriPanelView(bpy.types.Panel):
     """Viewable Options"""
 
-    bl_idname = "OBJECT_PT_Sushi_view"
+    bl_idname = "OBJECT_PT_onigiri_view"
     bl_label = "Viewable"
     bl_space_type = "VIEW_3D"
-    bl_category = "Sushi"
+    bl_category = "Onigiri"
     bl_region_type = "UI"
     bl_options = {"DEFAULT_CLOSED"}
 
@@ -516,14 +516,14 @@ class SushiPanelView(bpy.types.Panel):
         if scene_name not in oni_view["states"].get("names"):
 
             row.operator(
-                "Sushi.access_everything",
+                "onigiri.access_everything",
                 text="Open Your Eyes",
                 icon_value=get_icon_id("eye"),
             ).state = "open"
         else:
 
             row.operator(
-                "Sushi.access_everything",
+                "onigiri.access_everything",
                 text="Close Your Eyes",
             ).state = "close"
 

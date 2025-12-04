@@ -1,36 +1,22 @@
-# SUSHI/__init__.py
-import os
-import importlib
+# Sushi/__init__.py  ← ONLY FILE WE TOUCH
 import bpy
+from bpy.utils import register_class, unregister_class
 
 bl_info = {
     "name": "Sushi",
-    "author": "The Sushi Team",
+    "author": "SaintedCoder + community",
     "version": (0, 1, 0),
     "blender": (5, 0, 0),
     "location": "View3D > Sidebar > Sushi",
-    "description": "Free, open-source bento rigging and animation tools for Second Life / OpenSim",
+    "description": "Free open-source bento rigging tools (Onigiri 4.1.3 core)",
     "category": "Rigging",
 }
 
-modules = ["core"]
-
-# Auto-discover plugin folders
-plugin_path = os.path.join(os.path.dirname(__file__), "plugins")
-if os.path.exists(plugin_path):
-    for name in sorted(os.listdir(plugin_path)):
-        full = os.path.join(plugin_path, name)
-        if os.path.isdir(full) and not name.startswith("_"):
-            modules.append(f"plugins.{name}")
+# Import the real Onigiri core exactly how the original author did it
+from .core import *
 
 def register():
-    for m in modules:
-        mod = importlib.import_module(f".{m}", package=__package__)
-        if hasattr(mod, "register"):
-            mod.register()
+    core.register()
 
 def unregister():
-    for m in reversed(modules):
-        mod = importlib.import_module(f".{m}", package=__package__)
-        if hasattr(mod, "unregister"):
-            mod.unregister()
+    core.unregister()
